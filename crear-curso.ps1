@@ -11,10 +11,10 @@ param(
 
 $basePath = "C:\GithubOrden"
 
-$labsPath = "$basePath\training-labs"
+$labsPath = "$basePath\training-templates"
 $deliveryPath = "$basePath\training-delivery"
 
-$templateLabs = "$labsPath\$CourseCode-TEMPLATE"
+$templateLabs = "$labsPath\$CourseCode"
 $templateDelivery = "$deliveryPath\$CourseCode\TEMPLATE"
 
 $versionName = "$Center-$Month"
