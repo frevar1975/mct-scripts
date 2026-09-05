@@ -4,58 +4,101 @@ param(
 )
 
 $basePath = "C:\GithubOrden"
-
-$labsPath = "$basePath\training-templates"
-$deliveryPath = "$basePath\training-delivery"
-
-$templateLabs = "$labsPath\$CourseCode-TEMPLATE"
-$templateDelivery = "$deliveryPath\$CourseCode\TEMPLATE"
+$templatesPath = "$basePath\training-templates"
+$coursePath = "$templatesPath\$CourseCode"
 
 Write-Host "======================================="
-Write-Host "Creando TEMPLATE para: $CourseCode"
+Write-Host "Creando template de curso"
+Write-Host "Curso: $CourseCode"
 Write-Host "======================================="
 
-# Crear estructura labs
-New-Item -ItemType Directory -Path $templateLabs -Force | Out-Null
-New-Item -ItemType Directory -Path "$templateLabs\demos" -Force | Out-Null
-New-Item -ItemType Directory -Path "$templateLabs\labs" -Force | Out-Null
-New-Item -ItemType Directory -Path "$templateLabs\prompts" -Force | Out-Null
+if (Test-Path $coursePath) {
+    Write-Host "[ERROR] El curso ya existe:"
+    Write-Host $coursePath
+    exit 1
+}
 
-# Crear archivos con contenido (importante para git)
-Set-Content "$templateLabs\README.md" "# $CourseCode Template"
+New-Item -ItemType Directory -Path $coursePath -Force | Out-Null
 
-Set-Content "$templateLabs\demos\demo-texto.md" "Demo texto"
-Set-Content "$templateLabs\demos\demo-vision.md" "Demo vision"
-Set-Content "$templateLabs\demos\demo-nlp.md" "Demo NLP"
-Set-Content "$templateLabs\demos\demo-agente.md" "Demo agente"
+$folders = @(
+    "demos",
+    "labs",
+    "prompts",
+    "scripts",
+    "datasets"
+)
 
-Set-Content "$templateLabs\labs\lab-1.md" "Lab 1"
-Set-Content "$templateLabs\labs\lab-2.md" "Lab 2"
+foreach ($folder in $folders) {
+    New-Item -ItemType Directory -Path "$coursePath\$folder" -Force | Out-Null
+}
 
-Set-Content "$templateLabs\prompts\prompts.md" "Prompts base"
+@"
+# $CourseCode
 
-# Crear estructura delivery
-New-Item -ItemType Directory -Path "$deliveryPath\$CourseCode" -Force | Out-Null
-New-Item -ItemType Directory -Path $templateDelivery -Force | Out-Null
+Template reutilizable del curso $CourseCode.
 
-Set-Content "$templateDelivery\plan-clases.md" "Plan de clases"
-Set-Content "$templateDelivery\timing.md" "Timing"
-Set-Content "$templateDelivery\notas.md" "Notas"
-Set-Content "$templateDelivery\checklist.md" "Checklist"
-Set-Content "$templateDelivery\sales-angle.md" "Ventas"
+## Estructura
 
-Write-Host "✅ TEMPLATE creado correctamente"
+- demos: demostraciones para clase
+- labs: ejercicios practicos
+- prompts: prompts utilizados durante el curso
+- scripts: scripts PowerShell, CLI, Python u otros
+- datasets: archivos de datos utilizados en demos o labs
 
-# Git labs
-Set-Location $labsPath
+## Regla
+
+Este directorio contiene solo material reutilizable.
+
+Las ejecuciones por centro y fecha se crean en training-delivery.
+"@ | Set-Content "$coursePath\README.md"
+
+@"
+# Demos
+
+Colocar aqui las demostraciones reutilizables del curso.
+"@ | Set-Content "$coursePath\demos\README.md"
+
+@"
+# Labs
+
+Colocar aqui los laboratorios y ejercicios practicos.
+"@ | Set-Content "$coursePath\labs\README.md"
+
+@"
+# Prompts
+
+Colocar aqui los prompts utilizados durante el curso.
+"@ | Set-Content "$coursePath\prompts\README.md"
+
+@"
+# Scripts
+
+Colocar aqui los scripts utilizados durante demos y labs.
+"@ | Set-Content "$coursePath\scripts\README.md"
+
+@"
+# Datasets
+
+Colocar aqui datasets o archivos de ejemplo necesarios para demos o labs.
+"@ | Set-Content "$coursePath\datasets\README.md"
+
+Write-Host "[OK] Template creado:"
+Write-Host $coursePath
+
+Set-Location $templatesPath
+
 git add .
-git commit -m "Add $CourseCode template labs"
-git push
 
-# Git delivery
-Set-Location $deliveryPath
-git add .
-git commit -m "Add $CourseCode template delivery"
-git push
+$changes = git status --porcelain
 
-Write-Host "🚀 TEMPLATE subido correctamente"
+if ($changes) {
+    git commit -m "Add $CourseCode training template"
+    git push
+}
+else {
+    Write-Host "[INFO] No hay cambios para subir."
+}
+
+Write-Host "======================================="
+Write-Host "[OK] Proceso terminado"
+Write-Host "======================================="
