@@ -11,59 +11,56 @@ param(
 
 $basePath = "C:\GithubOrden"
 
-$labsPath = "$basePath\training-templates"
+$templatesPath = "$basePath\training-templates"
 $deliveryPath = "$basePath\training-delivery"
 
-$templateLabs = "$labsPath\$CourseCode"
-$templateDelivery = "$deliveryPath\$CourseCode\TEMPLATE"
+$templateCourse = "$templatesPath\$CourseCode"
 
 $versionName = "$Center-$Month"
-
-$newLabs = "$labsPath\$CourseCode-$versionName"
-$newDelivery = "$deliveryPath\$CourseCode\$versionName"
+$courseDeliveryRoot = "$deliveryPath\$CourseCode"
+$newDelivery = "$courseDeliveryRoot\$versionName"
 
 Write-Host "======================================="
-Write-Host "Creando curso: $CourseCode"
+Write-Host "Creando entrega de curso"
+Write-Host "Curso:  $CourseCode"
 Write-Host "Centro: $Center"
-Write-Host "Mes: $Month"
+Write-Host "Mes:    $Month"
 Write-Host "======================================="
 
-# Validar templates
-if (!(Test-Path $templateLabs)) {
-    Write-Host "❌ No existe TEMPLATE en training-labs"
-    exit
+if (!(Test-Path $templateCourse)) {
+    Write-Host "[ERROR] No existe el curso base:"
+    Write-Host $templateCourse
+    exit 1
 }
 
-if (!(Test-Path $templateDelivery)) {
-    Write-Host "❌ No existe TEMPLATE en training-delivery"
-    exit
+if (Test-Path $newDelivery) {
+    Write-Host "[ERROR] Esta ejecucion ya existe:"
+    Write-Host $newDelivery
+    exit 1
 }
 
-# Copiar LABS
-Write-Host "📦 Copiando labs..."
-Copy-Item -Recurse -Force $templateLabs $newLabs
+New-Item -ItemType Directory -Path $courseDeliveryRoot -Force | Out-Null
 
-# Copiar DELIVERY
-Write-Host "📦 Copiando delivery..."
-Copy-Item -Recurse -Force $templateDelivery $newDelivery
+Write-Host "[OK] Copiando template..."
+Copy-Item -Path $templateCourse -Destination $newDelivery -Recurse -Force
 
-# Limpiar carpeta TEMPLATE interna si existe
-if (Test-Path "$newDelivery\TEMPLATE") {
-    Remove-Item -Recurse -Force "$newDelivery\TEMPLATE"
-}
+Write-Host "[OK] Curso creado:"
+Write-Host $newDelivery
 
-Write-Host "✅ Curso creado correctamente"
-
-# Git LABS
-Set-Location $labsPath
-git add .
-git commit -m "Add $CourseCode $versionName labs"
-git push
-
-# Git DELIVERY
 Set-Location $deliveryPath
-git add .
-git commit -m "Add $CourseCode $versionName delivery"
-git push
 
-Write-Host "🚀 Curso subido a GitHub"
+git add .
+
+$changes = git status --porcelain
+
+if ($changes) {
+    git commit -m "Add $CourseCode $versionName delivery"
+    git push
+}
+else {
+    Write-Host "[INFO] No hay cambios para subir."
+}
+
+Write-Host "======================================="
+Write-Host "[OK] Proceso terminado"
+Write-Host "======================================="
